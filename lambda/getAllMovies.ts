@@ -1,4 +1,5 @@
 import { Handler } from "aws-lambda";
+import { APIGatewayProxyHandlerV2 } from "aws-lambda"; 
 
 import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
 import { DynamoDBDocumentClient, GetCommand, ScanCommand } from "@aws-sdk/lib-dynamodb";
