@@ -31,7 +31,7 @@ export const handler: APIGatewayProxyHandlerV2 = async (event, context) => {
             "content-type": "application/json",
           },
           body: JSON.stringify({
-            message: `Incorrect type. Must match Movie schema`,
+            message: `Incorrect type. Must match review schema`,
             schema: schema.definitions["MovieReview"],
           }),
         };
@@ -39,7 +39,7 @@ export const handler: APIGatewayProxyHandlerV2 = async (event, context) => {
 
     const commandOutput = await ddbDocClient.send(
       new PutCommand({
-        TableName: process.env.TABLE_NAME,
+        TableName: process.env.REVIEW_TABLE_NAME,
         Item: body,
       })
     );
