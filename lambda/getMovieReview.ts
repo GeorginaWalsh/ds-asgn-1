@@ -51,13 +51,22 @@ export const handler: APIGatewayProxyHandlerV2 = async (event, context) => {
       commandInput = {
         ...commandInput,
         IndexName: "ratingIx",
-        KeyConditionExpression: "movieId = :m and begins_with(minRating, :r) ",
+        KeyConditionExpression: "movieId = :m and minRating < :r) ",
         ExpressionAttributeValues: {
           ":m": movieId,
           ":r": queryParams.minRating,
         },
       };
-    } else {
+    } else if ("reviewerName" in queryParams) {
+        commandInput = {
+          ...commandInput,
+          KeyConditionExpression: "movieId = :m and begins_with(reviewerName, :a) ",
+          ExpressionAttributeValues: {
+            ":m": movieId,
+            ":a": queryParams.reviewerName,
+          },
+        };
+      } else {
       commandInput = {
         ...commandInput,
         KeyConditionExpression: "movieId = :m",
