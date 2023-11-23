@@ -14,7 +14,7 @@ import schema from "../shared/types.schema.json";
 
 const ajv = new Ajv();
 const isValidQueryParams = ajv.compile(
-  schema.definitions["MovieAndCastMemberQueryParams"] || {}
+  schema.definitions["MovieAndReviewQueryParams"] || {}
 );
 
 const ddbDocClient = createDDbDocClient();
@@ -65,9 +65,9 @@ export const handler: APIGatewayProxyHandlerV2 = async (event, context) => { // 
 
     const cast = queryParams;
     let commandInput: QueryCommandInput = {
-      TableName: process.env.CAST_TABLE_NAME,
+      TableName: process.env.REVIEW_TABLE_NAME,
     };
-    if ("cast" in queryParams) {
+    if ("reviews" in queryParams) {
       commandInput = {
         ...commandInput,
         // IndexName: "roleIx",
