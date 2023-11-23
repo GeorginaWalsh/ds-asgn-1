@@ -35,19 +35,51 @@ export class AppApi extends Construct {
       },
     };
 
-    const protectedRes = appApi.root.addResource("protected");
+    // const protectedRes = appApi.root.addResource("protected");
+    const addReviewRes = appApi.root.addResource("addReview");
+    const removeReviewRes = appApi.root.addResource("removeReview");
+    const updateReviewRes = appApi.root.addResource("updateReview");
 
-    const publicRes = appApi.root.addResource("public");
 
-    const protectedFn = new node.NodejsFunction(this, "ProtectedFn", {
+    // const publicRes = appApi.root.addResource("public");
+    const getAllMoviesRes = appApi.root.addResource("getAllMovies");
+    const getMovieByIdRes = appApi.root.addResource("getMovieById");
+    const getMovieReviewRes = appApi.root.addResource("getMovieReview");
+
+    // const protectedFn = new node.NodejsFunction(this, "ProtectedFn", {
+    //   ...appCommonFnProps,
+    //   entry: "./lambda/protected.ts",
+    // });
+    const addReviewFn = new node.NodejsFunction(this, "AddReviewFn", {
       ...appCommonFnProps,
-      entry: "./lambda/protected.ts",
+      entry: "./lambda/addReview.ts",
+    });
+    const removeReviewFn = new node.NodejsFunction(this, "RemoveReviewFn", {
+      ...appCommonFnProps,
+      entry: "./lambda/removeReview.ts",
+    });
+    const updateReviewFn = new node.NodejsFunction(this, "UpdateReviewFn", {
+      ...appCommonFnProps,
+      entry: "./lambda/updateReview.ts",
     });
 
-    const publicFn = new node.NodejsFunction(this, "PublicFn", {
+    // const publicFn = new node.NodejsFunction(this, "PublicFn", {
+    //   ...appCommonFnProps,
+    //   entry: "./lambda/public.ts",
+    // });
+    const getAllMoviesFn = new node.NodejsFunction(this, "GetAllMoviesFn", {
+      ...appCommonFnProps,
+      entry: "./lambda/getAllMovies.ts",
+    });
+    const getMovieByIdFn = new node.NodejsFunction(this, "GetMovieByIdFn", {
       ...appCommonFnProps,
       entry: "./lambda/public.ts",
     });
+    const getMovieReviewsFn = new node.NodejsFunction(this, "GetMovieReviewsFn", {
+      ...appCommonFnProps,
+      entry: "./lambda/getMovieReview.ts",
+    });
+    
 
     const authorizerFn = new node.NodejsFunction(this, "AuthorizerFn", {
       ...appCommonFnProps,
@@ -64,11 +96,28 @@ export class AppApi extends Construct {
       }
     );
 
-    protectedRes.addMethod("GET", new apig.LambdaIntegration(protectedFn), {
+    // protectedRes.addMethod("GET", new apig.LambdaIntegration(protectedFn), {
+    //   authorizer: requestAuthorizer,
+    //   authorizationType: apig.AuthorizationType.CUSTOM,
+    // });
+    addReviewRes.addMethod("POST", new apig.LambdaIntegration(addReviewFn), {
+      authorizer: requestAuthorizer,
+      authorizationType: apig.AuthorizationType.CUSTOM,
+    });
+    removeReviewRes.addMethod("DELETE", new apig.LambdaIntegration(removeReviewFn), {
+      authorizer: requestAuthorizer,
+      authorizationType: apig.AuthorizationType.CUSTOM,
+    });
+    updateReviewRes.addMethod("PUT", new apig.LambdaIntegration(updateReviewFn), {
       authorizer: requestAuthorizer,
       authorizationType: apig.AuthorizationType.CUSTOM,
     });
 
-    publicRes.addMethod("GET", new apig.LambdaIntegration(publicFn));
+    // publicRes.addMethod("GET", new apig.LambdaIntegration(publicFn));
+    getAllMoviesRes.addMethod("GET", new apig.LambdaIntegration(getAllMoviesFn));
+    getMovieByIdRes.addMethod("GET", new apig.LambdaIntegration(getMovieByIdFn));
+    getMovieReviewRes.addMethod("GET", new apig.LambdaIntegration(getMovieReviewsFn));
+
+
   }
 }
