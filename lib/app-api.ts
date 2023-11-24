@@ -36,15 +36,15 @@ export class AppApi extends Construct {
     };
 
     // const protectedRes = appApi.root.addResource("protected");
-    const addReviewRes = appApi.root.addResource("addReview");
-    const removeReviewRes = appApi.root.addResource("removeReview");
-    const updateReviewRes = appApi.root.addResource("updateReview");
+    const getAllMoviesRes = appApi.root.addResource("movies");
+    const getMovieRes = getAllMoviesRes.addResource("{movieId}");
+    const addReviewRes = getMovieRes.addResource("reviews");
+    const getReviewRes = addReviewRes.addResource("{reviewerName}");
+    // const updateReviewRes = appApi.root.addResource("updateReview");
 
 
-    // const publicRes = appApi.root.addResource("public");
-    const getAllMoviesRes = appApi.root.addResource("getAllMovies");
-    const getMovieByIdRes = appApi.root.addResource("getMovieById");
-    const getMovieReviewRes = appApi.root.addResource("getMovieReview");
+  
+
 
     // const protectedFn = new node.NodejsFunction(this, "ProtectedFn", {
     //   ...appCommonFnProps,
@@ -100,23 +100,23 @@ export class AppApi extends Construct {
     //   authorizer: requestAuthorizer,
     //   authorizationType: apig.AuthorizationType.CUSTOM,
     // });
+
+    getAllMoviesRes.addMethod("GET", new apig.LambdaIntegration(getAllMoviesFn));
+    getMovieRes.addMethod("GET", new apig.LambdaIntegration(getMovieByIdFn));
+    getReviewRes.addMethod("GET", new apig.LambdaIntegration(getMovieReviewsFn));
+    
     addReviewRes.addMethod("POST", new apig.LambdaIntegration(addReviewFn), {
       authorizer: requestAuthorizer,
       authorizationType: apig.AuthorizationType.CUSTOM,
     });
-    removeReviewRes.addMethod("DELETE", new apig.LambdaIntegration(removeReviewFn), {
+    getReviewRes.addMethod("DELETE", new apig.LambdaIntegration(removeReviewFn), {
       authorizer: requestAuthorizer,
       authorizationType: apig.AuthorizationType.CUSTOM,
     });
-    updateReviewRes.addMethod("PUT", new apig.LambdaIntegration(updateReviewFn), {
+    getReviewRes.addMethod("PUT", new apig.LambdaIntegration(updateReviewFn), {
       authorizer: requestAuthorizer,
       authorizationType: apig.AuthorizationType.CUSTOM,
     });
-
-    // publicRes.addMethod("GET", new apig.LambdaIntegration(publicFn));
-    getAllMoviesRes.addMethod("GET", new apig.LambdaIntegration(getAllMoviesFn));
-    getMovieByIdRes.addMethod("GET", new apig.LambdaIntegration(getMovieByIdFn));
-    getMovieReviewRes.addMethod("GET", new apig.LambdaIntegration(getMovieReviewsFn));
 
 
   }
