@@ -43,11 +43,13 @@ export const handler: APIGatewayProxyHandlerV2 = async (event, context) => {
     }
     
     // const parameters = event.queryStringParameters;
-    const movieId = parseInt(queryParams.movieId);
+
     let commandInput: QueryCommandInput = {
       TableName: process.env.TABLE_NAME,
     };
-    if ("minRating" in queryParams) {
+    if (queryParams.movieId != undefined) {
+      const movieId = parseInt(queryParams.movieId);
+      if ("minRating" in queryParams) {
       commandInput = {
         ...commandInput,
         IndexName: "ratingIx",
@@ -75,6 +77,7 @@ export const handler: APIGatewayProxyHandlerV2 = async (event, context) => {
         },
       };
     }
+  }
     
     // const ddbDocClient = createDocumentClient();
     const commandOutput = await ddbDocClient.send(

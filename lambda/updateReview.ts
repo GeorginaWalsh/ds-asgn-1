@@ -1,6 +1,6 @@
 import { APIGatewayProxyHandlerV2 } from "aws-lambda";
 import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
-import { DynamoDBDocumentClient, UpdateCommand } from "@aws-sdk/lib-dynamodb";
+import { DynamoDBDocumentClient, PutCommand, DeleteCommand } from "@aws-sdk/lib-dynamodb";
 import Ajv from "ajv";
 import schema from "../shared/types.schema.json";
 import { parse } from "querystring";
@@ -63,10 +63,10 @@ export const handler: APIGatewayProxyHandlerV2 = async (event, context) => {
         }
 
     const commandOutput = await ddbDocClient.send(
-      new UpdateCommand({
+      new PutCommand({
         TableName: process.env.REVIEW_TABLE_NAME,
-        Key: { movieId: movieId, reviewerName: reviewerName },
-        Input: body,
+        // Key: { movieId: movieId, reviewerName: reviewerName },
+        Item: {body},
       })
     );
     return {
@@ -74,7 +74,7 @@ export const handler: APIGatewayProxyHandlerV2 = async (event, context) => {
       headers: {
         "content-type": "application/json",
       },
-      body: JSON.stringify({ message: "Movie review added" }),
+      body: JSON.stringify({ message: "Movie review updated" }),
     };
   } catch (error: any) {
     console.log(JSON.stringify(error));

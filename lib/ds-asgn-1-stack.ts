@@ -66,7 +66,7 @@ export class Asgn01AppStack extends cdk.Stack {
       {
         architecture: lambda.Architecture.ARM_64,
         runtime: lambda.Runtime.NODEJS_16_X,
-        entry: `${__dirname}/../lambdas/getMovieById.ts`,
+        entry: `${__dirname}/../lambda/getMovieById.ts`,
         timeout: cdk.Duration.seconds(10),
         memorySize: 128,
         environment: {
@@ -83,7 +83,7 @@ export class Asgn01AppStack extends cdk.Stack {
         {
           architecture: lambda.Architecture.ARM_64,
           runtime: lambda.Runtime.NODEJS_16_X,
-          entry: `${__dirname}/../lambdas/getAllMovies.ts`,
+          entry: `${__dirname}/../lambda/getAllMovies.ts`,
           timeout: cdk.Duration.seconds(10),
           memorySize: 128,
           environment: {
@@ -113,7 +113,7 @@ export class Asgn01AppStack extends cdk.Stack {
         const newMovieReviewFn = new lambdanode.NodejsFunction(this, "AddMovieReviewFn", {
           architecture: lambda.Architecture.ARM_64,
           runtime: lambda.Runtime.NODEJS_16_X,
-          entry: `${__dirname}/../lambdas/addReview.ts`,
+          entry: `${__dirname}/../lambda/addReview.ts`,
           timeout: cdk.Duration.seconds(10),
           memorySize: 128,
           environment: {
@@ -128,7 +128,7 @@ export class Asgn01AppStack extends cdk.Stack {
           {
             architecture: lambda.Architecture.ARM_64,
             runtime: lambda.Runtime.NODEJS_16_X,
-            entry: `${__dirname}/../lambdas/removeReview.ts`,
+            entry: `${__dirname}/../lambda/removeReview.ts`,
             timeout: cdk.Duration.seconds(10),
             memorySize: 128,
             environment: {
@@ -144,7 +144,7 @@ export class Asgn01AppStack extends cdk.Stack {
             {
               architecture: lambda.Architecture.ARM_64,
               runtime: lambda.Runtime.NODEJS_16_X,
-              entry: `${__dirname}/../lambdas/getMovieReview.ts`,
+              entry: `${__dirname}/../lambda/getMovieReview.ts`,
               timeout: cdk.Duration.seconds(10),
               memorySize: 128,
               environment: {
@@ -157,7 +157,7 @@ export class Asgn01AppStack extends cdk.Stack {
           const updateMovieReviewFn = new lambdanode.NodejsFunction(this, "UpdateMovieReviewFn", {
             architecture: lambda.Architecture.ARM_64,
             runtime: lambda.Runtime.NODEJS_16_X,
-            entry: `${__dirname}/../lambdas/updateReview.ts`,
+            entry: `${__dirname}/../lambda/updateReview.ts`,
             timeout: cdk.Duration.seconds(10),
             memorySize: 128,
             environment: {
@@ -201,27 +201,27 @@ export class Asgn01AppStack extends cdk.Stack {
           "GET",
           new apig.LambdaIntegration(getMovieByIdFn, { proxy: true })
         );
-    
-        const removeMovieReviewEndpoint = movieEndpoint.addResource('{movieId}/reviews/{reviewerName}')
-        removeMovieReviewEndpoint.addMethod(
-          "DELETE",
-          new apig.LambdaIntegration(removeMovieReviewFn, { proxy: true })
-        );
-    
-        const addMovieReviewEndpoint = moviesEndpoint.addResource("reviews");
+
+        const addMovieReviewEndpoint = movieEndpoint.addResource("reviews");
         addMovieReviewEndpoint.addMethod(
           "POST",
           new apig.LambdaIntegration(newMovieReviewFn, { proxy: true })
         );
-    
-        const getmovieReviewEndpoint = moviesEndpoint.addResource('{movieId}/reviews/{reviewerName}');
-        getmovieReviewEndpoint.addMethod(
+
+        const getMovieReviewEndpoint = addMovieReviewEndpoint.addResource('{reviewerName}');
+        getMovieReviewEndpoint.addMethod(
           "GET",
           new apig.LambdaIntegration(getMovieReviewsFn, { proxy: true })
         );
+    
+        // const removeMovieReviewEndpoint = movieEndpoint.addResource('{reviewerName}')
+        getMovieReviewEndpoint.addMethod(
+          "DELETE",
+          new apig.LambdaIntegration(removeMovieReviewFn, { proxy: true })
+        );
 
-        const updateMovieReviewEndpoint = moviesEndpoint.addResource('{movieId}/reviews/{reviewerName}');
-        updateMovieReviewEndpoint.addMethod(
+        // const updateMovieReviewEndpoint = moviesEndpoint.addResource('{movieId}/reviews/{reviewerName}');
+        getMovieReviewEndpoint.addMethod(
           "PUT",
           new apig.LambdaIntegration(updateMovieReviewFn, { proxy: true })
         );
