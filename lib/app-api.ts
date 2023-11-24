@@ -4,6 +4,11 @@ import { Construct } from "constructs";
 import * as apig from "aws-cdk-lib/aws-apigateway";
 import * as lambda from "aws-cdk-lib/aws-lambda";
 import * as node from "aws-cdk-lib/aws-lambda-nodejs";
+import * as dynamodb from "aws-cdk-lib/aws-dynamodb";
+import * as lambdanode from "aws-cdk-lib/aws-lambda-nodejs";
+import * as custom from "aws-cdk-lib/custom-resources";
+import { generateBatch } from "../shared/util";
+import { movies, movieReviews } from "../seed/movies";
 
 type AppApiProps = {
   userPoolId: string;
@@ -34,6 +39,43 @@ export class AppApi extends Construct {
         REGION: cdk.Aws.REGION,
       },
     };
+
+    const moviesTable = new dynamodb.Table(this, "MoviesTable", {
+      billingMode: dynamodb.BillingMode.PAY_PER_REQUEST,
+      partitionKey: { name: "movieId", type: dynamodb.AttributeType.NUMBER },
+      removalPolicy: cdk.RemovalPolicy.DESTROY,
+      tableName: "Movies",
+    });
+
+    const movieReviewsTable = new dynamodb.Table(this, "MovieReviewTable", {
+      billingMode: dynamodb.BillingMode.PAY_PER_REQUEST,
+      partitionKey: { name: "movieId", type: dynamodb.AttributeType.NUMBER },
+      sortKey: { name: "reviewerName", type: dynamodb.AttributeType.STRING },
+      removalPolicy: cdk.RemovalPolicy.DESTROY,
+      tableName: "MovieReview",
+    });
+
+    movieReviewsTable.addLocalSecondaryIndex({
+      indexName: "ratingIx",
+      sortKey: { name: "content", type: dynamodb.AttributeType.STRING },
+    });
+
+    new custom.AwsCustomResource(this, "moviesddbInitData", {
+      onCreate: {
+        service: "DynamoDB",
+        action: "batchWriteItem",
+        parameters: {
+          RequestItems: {
+            [moviesTable.tableName]: generateBatch(movies),
+            [movieReviewsTable.tableName]: generateBatch(movieReviews),  // Added
+          },
+        },
+        physicalResourceId: custom.PhysicalResourceId.of("moviesddbInitData"), //.of(Date.now().toString()),
+      },
+      policy: custom.AwsCustomResourcePolicy.fromSdkCalls({
+        resources: [moviesTable.tableArn, movieReviewsTable.tableArn],  // Includes movie cast
+      }),
+    });
 
     // const protectedRes = appApi.root.addResource("protected");
     const getAllMoviesRes = appApi.root.addResource("movies");
@@ -70,6 +112,15 @@ export class AppApi extends Construct {
     const getAllMoviesFn = new node.NodejsFunction(this, "GetAllMoviesFn", {
       ...appCommonFnProps,
       entry: "./lambda/getAllMovies.ts",
+      architecture: lambda.Architecture.ARM_64,
+      runtime: lambda.Runtime.NODEJS_16_X,
+          // entry: `${__dirname}/../lambda/getAllMovies.ts`,
+      timeout: cdk.Duration.seconds(10),
+      memorySize: 128,
+      environment: {
+        TABLE_NAME: moviesTable.tableName,
+          REGION: 'eu-west-1',
+      },
     });
     const getMovieByIdFn = new node.NodejsFunction(this, "GetMovieByIdFn", {
       ...appCommonFnProps,
@@ -85,6 +136,8 @@ export class AppApi extends Construct {
       ...appCommonFnProps,
       entry: "./lambda/auth/authorizer.ts",
     });
+
+    moviesTable.grantReadData(getAllMoviesFn)
 
     const requestAuthorizer = new apig.RequestAuthorizer(
       this,
@@ -104,7 +157,7 @@ export class AppApi extends Construct {
     getAllMoviesRes.addMethod("GET", new apig.LambdaIntegration(getAllMoviesFn));
     getMovieRes.addMethod("GET", new apig.LambdaIntegration(getMovieByIdFn));
     getReviewRes.addMethod("GET", new apig.LambdaIntegration(getMovieReviewsFn));
-    
+
     addReviewRes.addMethod("POST", new apig.LambdaIntegration(addReviewFn), {
       authorizer: requestAuthorizer,
       authorizationType: apig.AuthorizationType.CUSTOM,
