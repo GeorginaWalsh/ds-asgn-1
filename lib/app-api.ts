@@ -155,7 +155,7 @@ export class AppApi extends Construct {
       timeout: cdk.Duration.seconds(10),
       memorySize: 128,
       environment: {
-        TABLE_NAME: movieReviewsTable.tableName,
+        REVIEW_TABLE_NAME: movieReviewsTable.tableName,
         REGION: "eu-west-1",
       },
     });
