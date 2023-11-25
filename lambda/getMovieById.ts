@@ -26,6 +26,7 @@ export const handler: APIGatewayProxyHandlerV2 = async (event, context) => { // 
     // const movieId = parameters ? parseInt(parameters.movieId) : undefined;
     const parameters  = event?.pathParameters;
     const movieId = parameters?.movieId ? parseInt(parameters.movieId) : undefined;
+    const reviews = parameters?.reviews ? movieId : undefined;
 
     if (!movieId) {
       return {
@@ -37,64 +38,21 @@ export const handler: APIGatewayProxyHandlerV2 = async (event, context) => { // 
       };
     }
 
-
-    const queryParams = event.queryStringParameters;
-    if (!queryParams) {
-      return {
-        
-        // statusCode: 500,
-        // headers: {
-        //   "content-type": "application/json",
-        // },
-        // body: JSON.stringify({ message: "Missing query parameters" }),
-      };
-    }
-    if (!isValidQueryParams(queryParams)) {
-      return {
-      //   statusCode: 500,
-      //   headers: {
-      //     "content-type": "application/json",
-      //   },
-      //   body: JSON.stringify({
-      //     message: `Incorrect type. Must match Query parameters schema`,
-      //     schema: schema.definitions["MovieAndCastMemberQueryParams"],
-      //   }),
-      // };
-      } 
-    }
-
-    const cast = queryParams;
-    let commandInput: QueryCommandInput = {
-      TableName: process.env.REVIEW_TABLE_NAME,
-    };
-    if ("reviews" in queryParams) {
-      commandInput = {
-        ...commandInput,
-        // IndexName: "roleIx",
-        KeyConditionExpression: " movieId = :m ",
-        ExpressionAttributeValues: {
-          ":m": movieId,
-          cast: new QueryCommand(commandInput)
-        },
-      };
-      // const additionalCommandOutput = await ddbDocClient.send(
-      // new QueryCommand(commandInput)
-      // );
-    }
-
-
-
     const commandOutput = await ddbDocClient.send(
       new GetCommand({
         TableName: process.env.TABLE_NAME,
         Key: { movieId: movieId },
-      }),
+      })
     );
-
-    // const additionalCommandOutput = await ddbDocClient.send(
-    //   new QueryCommand(commandInput)
-    //   );
-    
+    if (!reviews) {
+      const commandOutput = await ddbDocClient.send(
+        new GetCommand({
+          TableName: process.env.TABLE_NAME,
+          Key: { movieId: movieId },
+        })
+      );
+    } 
+  
     console.log("GetCommand response: ", commandOutput);
     if (!commandOutput.Item) {
       return {
@@ -106,12 +64,8 @@ export const handler: APIGatewayProxyHandlerV2 = async (event, context) => { // 
       };
     }
     const body = {
-      movie: commandOutput.Item,
-      // cast: new QueryCommand(commandInput)
-      // cast: commandInput
-      // cast: additionalCommandOutput
+      data: commandOutput.Item,
     };
-
     // Return Response
     return {
       statusCode: 200,

@@ -110,17 +110,17 @@ export class Asgn01AppStack extends cdk.Stack {
         //   }),
         // });
 
-    //     const newMovieReviewFn = new lambdanode.NodejsFunction(this, "AddMovieReviewFn", {
-    //       architecture: lambda.Architecture.ARM_64,
-    //       runtime: lambda.Runtime.NODEJS_16_X,
-    //       entry: `${__dirname}/../lambda/addReview.ts`,
-    //       timeout: cdk.Duration.seconds(10),
-    //       memorySize: 128,
-    //       environment: {
-    //         TABLE_NAME: movieReviewsTable.tableName,
-    //         REGION: "eu-west-1",
-    //       },
-    //     });
+        // const newMovieReviewFn = new lambdanode.NodejsFunction(this, "AddMovieReviewFn", {
+        //   architecture: lambda.Architecture.ARM_64,
+        //   runtime: lambda.Runtime.NODEJS_16_X,
+        //   entry: `${__dirname}/../lambda/addReview.ts`,
+        //   timeout: cdk.Duration.seconds(10),
+        //   memorySize: 128,
+        //   environment: {
+        //     TABLE_NAME: movieReviewsTable.tableName,
+        //     REGION: "eu-west-1",
+        //   },
+        // });
 
     //     const removeMovieReviewFn = new lambdanode.NodejsFunction(
     //       this,

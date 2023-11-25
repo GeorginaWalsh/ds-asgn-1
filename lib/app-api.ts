@@ -82,33 +82,13 @@ export class AppApi extends Construct {
     const getMovieRes = getAllMoviesRes.addResource("{movieId}");
     const addReviewRes = getMovieRes.addResource("reviews");
     const getReviewRes = addReviewRes.addResource("{reviewerName}");
-    // const updateReviewRes = appApi.root.addResource("updateReview");
 
 
-  
-
-
-    // const protectedFn = new node.NodejsFunction(this, "ProtectedFn", {
-    //   ...appCommonFnProps,
-    //   entry: "./lambda/protected.ts",
-    // });
-    const addReviewFn = new node.NodejsFunction(this, "AddReviewFn", {
+    const authorizerFn = new node.NodejsFunction(this, "AuthorizerFn", {
       ...appCommonFnProps,
-      entry: "./lambda/addReview.ts",
-    });
-    const removeReviewFn = new node.NodejsFunction(this, "RemoveReviewFn", {
-      ...appCommonFnProps,
-      entry: "./lambda/removeReview.ts",
-    });
-    const updateReviewFn = new node.NodejsFunction(this, "UpdateReviewFn", {
-      ...appCommonFnProps,
-      entry: "./lambda/updateReview.ts",
+      entry: "./lambda/auth/authorizer.ts",
     });
 
-    // const publicFn = new node.NodejsFunction(this, "PublicFn", {
-    //   ...appCommonFnProps,
-    //   entry: "./lambda/public.ts",
-    // });
     const getAllMoviesFn = new node.NodejsFunction(this, "GetAllMoviesFn", {
       ...appCommonFnProps,
       entry: "./lambda/getAllMovies.ts",
@@ -124,20 +104,87 @@ export class AppApi extends Construct {
     });
     const getMovieByIdFn = new node.NodejsFunction(this, "GetMovieByIdFn", {
       ...appCommonFnProps,
-      entry: "./lambda/public.ts",
+      entry: "./lambda/getMovieById.ts",
+      architecture: lambda.Architecture.ARM_64,
+      runtime: lambda.Runtime.NODEJS_16_X,
+      // entry: `${__dirname}/../lambda/getMovieById.ts`,
+      timeout: cdk.Duration.seconds(10),
+      memorySize: 128,
+      environment: {
+        TABLE_NAME: moviesTable.tableName,
+        REVIEW_TABLE_NAME: movieReviewsTable.tableName,
+        REGION: 'eu-west-1',
+      },
     });
+
+    const addReviewFn = new node.NodejsFunction(this, "AddReviewFn", {
+      ...appCommonFnProps,
+      entry: "./lambda/addReview.ts",
+      architecture: lambda.Architecture.ARM_64,
+      runtime: lambda.Runtime.NODEJS_16_X,
+          // entry: `${__dirname}/../lambda/addReview.ts`,
+      timeout: cdk.Duration.seconds(10),
+      memorySize: 128,
+      environment: {
+        TABLE_NAME: movieReviewsTable.tableName,
+        REGION: "eu-west-1",
+      },
+    });
+
     const getMovieReviewsFn = new node.NodejsFunction(this, "GetMovieReviewsFn", {
       ...appCommonFnProps,
       entry: "./lambda/getMovieReview.ts",
+      architecture: lambda.Architecture.ARM_64,
+      runtime: lambda.Runtime.NODEJS_16_X,
+              // entry: `${__dirname}/../lambda/getMovieReview.ts`,
+      timeout: cdk.Duration.seconds(10),
+      memorySize: 128,
+      environment: {
+        TABLE_NAME: movieReviewsTable.tableName,
+        REGION: "eu-west-1",
+      },
     });
-    
 
-    const authorizerFn = new node.NodejsFunction(this, "AuthorizerFn", {
+    const removeReviewFn = new node.NodejsFunction(this, "RemoveReviewFn", {
       ...appCommonFnProps,
-      entry: "./lambda/auth/authorizer.ts",
+      entry: "./lambda/removeReview.ts",
+      architecture: lambda.Architecture.ARM_64,
+      runtime: lambda.Runtime.NODEJS_16_X,
+            // entry: `${__dirname}/../lambda/removeReview.ts`,
+      timeout: cdk.Duration.seconds(10),
+      memorySize: 128,
+      environment: {
+        TABLE_NAME: movieReviewsTable.tableName,
+        REGION: 'eu-west-1',
+      },
     });
 
+    const updateReviewFn = new node.NodejsFunction(this, "UpdateReviewFn", {
+      ...appCommonFnProps,
+      entry: "./lambda/updateReview.ts",
+      architecture: lambda.Architecture.ARM_64,
+      runtime: lambda.Runtime.NODEJS_16_X,
+            // entry: `${__dirname}/../lambda/updateReview.ts`,
+      timeout: cdk.Duration.seconds(10),
+      memorySize: 128,
+      environment: {
+        TABLE_NAME: movieReviewsTable.tableName,
+        REGION: "eu-west-1",
+      },
+    });
+
+    // const publicFn = new node.NodejsFunction(this, "PublicFn", {
+    //   ...appCommonFnProps,
+    //   entry: "./lambda/public.ts",
+    // });
+     
+
+    moviesTable.grantReadData(getMovieByIdFn)
     moviesTable.grantReadData(getAllMoviesFn)
+    movieReviewsTable.grantReadData(getMovieReviewsFn);
+    movieReviewsTable.grantReadWriteData(addReviewFn)
+    movieReviewsTable.grantReadWriteData(removeReviewFn)
+    movieReviewsTable.grantReadWriteData(updateReviewFn)
 
     const requestAuthorizer = new apig.RequestAuthorizer(
       this,
