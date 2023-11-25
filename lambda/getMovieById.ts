@@ -26,7 +26,7 @@ export const handler: APIGatewayProxyHandlerV2 = async (event, context) => { // 
     // const movieId = parameters ? parseInt(parameters.movieId) : undefined;
     const parameters  = event?.pathParameters;
     const movieId = parameters?.movieId ? parseInt(parameters.movieId) : undefined;
-    const reviews = parameters?.reviews ? movieId : undefined;
+    // const reviews = parameters?.reviews ? movieId : undefined;
 
     if (!movieId) {
       return {
@@ -44,14 +44,14 @@ export const handler: APIGatewayProxyHandlerV2 = async (event, context) => { // 
         Key: { movieId: movieId },
       })
     );
-    if (!reviews) {
-      const commandOutput = await ddbDocClient.send(
-        new GetCommand({
-          TableName: process.env.TABLE_NAME,
-          Key: { movieId: movieId },
-        })
-      );
-    } 
+    // if (!reviews) {
+    //   const commandOutput = await ddbDocClient.send(
+    //     new GetCommand({
+    //       TableName: process.env.TABLE_NAME,
+    //       Key: { movieId: movieId },
+    //     })
+    //   );
+    // } 
   
     console.log("GetCommand response: ", commandOutput);
     if (!commandOutput.Item) {

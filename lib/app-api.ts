@@ -80,8 +80,9 @@ export class AppApi extends Construct {
     // const protectedRes = appApi.root.addResource("protected");
     const getAllMoviesRes = appApi.root.addResource("movies");
     const getMovieRes = getAllMoviesRes.addResource("{movieId}");
-    const addReviewRes = getMovieRes.addResource("reviews");
-    const getReviewRes = addReviewRes.addResource("{reviewerName}");
+    const addReviewRes = getAllMoviesRes.addResource("reviews");
+    const getAllReviewsRes = getMovieRes.addResource("reviews");
+    const getReviewRes = getAllReviewsRes.addResource("{reviewerName}");
 
 
     const authorizerFn = new node.NodejsFunction(this, "AuthorizerFn", {
@@ -112,7 +113,6 @@ export class AppApi extends Construct {
       memorySize: 128,
       environment: {
         TABLE_NAME: moviesTable.tableName,
-        REVIEW_TABLE_NAME: movieReviewsTable.tableName,
         REGION: 'eu-west-1',
       },
     });
@@ -131,7 +131,22 @@ export class AppApi extends Construct {
       },
     });
 
-    const getMovieReviewsFn = new node.NodejsFunction(this, "GetMovieReviewsFn", {
+    
+    const getAllMovieReviewsFn = new node.NodejsFunction(this, "GetAllMovieReviewsFn", {
+      ...appCommonFnProps,
+      entry: "./lambda/getAllMovieReviews.ts",
+      architecture: lambda.Architecture.ARM_64,
+      runtime: lambda.Runtime.NODEJS_16_X,
+              // entry: `${__dirname}/../lambda/getMovieReview.ts`,
+      timeout: cdk.Duration.seconds(10),
+      memorySize: 128,
+      environment: {
+        REVIEW_TABLE_NAME: movieReviewsTable.tableName,
+        REGION: "eu-west-1",
+      },
+    });
+
+    const getMovieReviewFn = new node.NodejsFunction(this, "GetMovieReviewFn", {
       ...appCommonFnProps,
       entry: "./lambda/getMovieReview.ts",
       architecture: lambda.Architecture.ARM_64,
@@ -181,7 +196,8 @@ export class AppApi extends Construct {
 
     moviesTable.grantReadData(getMovieByIdFn)
     moviesTable.grantReadData(getAllMoviesFn)
-    movieReviewsTable.grantReadData(getMovieReviewsFn);
+    movieReviewsTable.grantReadData(getAllMovieReviewsFn);
+    movieReviewsTable.grantReadData(getMovieReviewFn);
     movieReviewsTable.grantReadWriteData(addReviewFn)
     movieReviewsTable.grantReadWriteData(removeReviewFn)
     movieReviewsTable.grantReadWriteData(updateReviewFn)
@@ -203,7 +219,8 @@ export class AppApi extends Construct {
 
     getAllMoviesRes.addMethod("GET", new apig.LambdaIntegration(getAllMoviesFn));
     getMovieRes.addMethod("GET", new apig.LambdaIntegration(getMovieByIdFn));
-    getReviewRes.addMethod("GET", new apig.LambdaIntegration(getMovieReviewsFn));
+    getAllReviewsRes.addMethod("GET", new apig.LambdaIntegration(getAllMovieReviewsFn));
+    getReviewRes.addMethod("GET", new apig.LambdaIntegration(getMovieReviewFn));
 
     addReviewRes.addMethod("POST", new apig.LambdaIntegration(addReviewFn), {
       authorizer: requestAuthorizer,

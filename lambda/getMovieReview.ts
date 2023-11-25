@@ -1,5 +1,5 @@
 import { APIGatewayProxyHandlerV2 } from "aws-lambda";
-import { MovieReviewQueryParams } from "../shared/types";
+import { MovieAndReviewQueryParams } from "../shared/types";
 import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
 import {
   DynamoDBDocumentClient,
@@ -11,7 +11,7 @@ import schema from "../shared/types.schema.json";
 
 const ajv = new Ajv();
 const isValidQueryParams = ajv.compile(
-  schema.definitions["MovieReviewQueryParams"] || {}
+  schema.definitions["MovieAndReviewQueryParams"] || {}
 );
  
 const ddbDocClient = createDocumentClient();
@@ -19,7 +19,9 @@ const ddbDocClient = createDocumentClient();
 export const handler: APIGatewayProxyHandlerV2 = async (event, context) => {
   try {
     console.log("Event: ", event);
+    const parameters  = event?.pathParameters;
     const queryParams = event.queryStringParameters;
+
     if (!queryParams) {
       return {
         statusCode: 500,
@@ -37,15 +39,13 @@ export const handler: APIGatewayProxyHandlerV2 = async (event, context) => {
         },
         body: JSON.stringify({
           message: `Incorrect type. Must match Query parameters schema`,
-          schema: schema.definitions["MovieReviewQueryParams"],
+          schema: schema.definitions["MovieAndReviewQueryParams"],
         }),
       };
     }
-    
-    // const parameters = event.queryStringParameters;
 
     let commandInput: QueryCommandInput = {
-      TableName: process.env.TABLE_NAME,
+      TableName: process.env.REVIEWER_TABLE_NAME,
     };
     if (queryParams.movieId != undefined) {
       const movieId = parseInt(queryParams.movieId);
