@@ -86,6 +86,7 @@ export class AppApi extends Construct {
     const addReviewRes = getAllMoviesRes.addResource("reviews");
     const getAllReviewsRes = getMovieRes.addResource("reviews");
     const getReviewRes = getAllReviewsRes.addResource("{reviewerName}");
+    const getAllReviewsByReviewerRes = addReviewRes.addResource("{reviewerName}")
     
 
     const authorizerFn = new node.NodejsFunction(this, "AuthorizerFn", {
@@ -191,6 +192,20 @@ export class AppApi extends Construct {
       },
     });
 
+    const getAllReviewsByReviewerFn = new node.NodejsFunction(this, "GetAllReviewsByReviewerFn", {
+      ...appCommonFnProps,
+      entry: "./lambda/getAllReviewsByReviewer.ts",
+      architecture: lambda.Architecture.ARM_64,
+      runtime: lambda.Runtime.NODEJS_16_X,
+              // entry: `${__dirname}/../lambda/getMovieReview.ts`,
+      timeout: cdk.Duration.seconds(10),
+      memorySize: 128,
+      environment: {
+        REVIEW_TABLE_NAME: movieReviewsTable.tableName,
+        REGION: "eu-west-1",
+      },
+    });
+
 
     // const publicFn = new node.NodejsFunction(this, "PublicFn", {
     //   ...appCommonFnProps,
@@ -203,6 +218,7 @@ export class AppApi extends Construct {
     movieReviewsTable.grantReadData(getAllMoviesFn);
     movieReviewsTable.grantReadData(getAllMovieReviewsFn);
     movieReviewsTable.grantReadData(getMovieReviewFn);
+    movieReviewsTable.grantReadData(getAllReviewsByReviewerFn);
     movieReviewsTable.grantReadWriteData(addReviewFn)
     movieReviewsTable.grantReadWriteData(removeReviewFn)
     movieReviewsTable.grantReadWriteData(updateReviewFn)
@@ -226,6 +242,7 @@ export class AppApi extends Construct {
     getMovieRes.addMethod("GET", new apig.LambdaIntegration(getMovieByIdFn));
     getAllReviewsRes.addMethod("GET", new apig.LambdaIntegration(getAllMovieReviewsFn));
     getReviewRes.addMethod("GET", new apig.LambdaIntegration(getMovieReviewFn));
+    getAllReviewsByReviewerRes.addMethod("GET", new apig.LambdaIntegration(getAllReviewsByReviewerFn));
 
     addReviewRes.addMethod("POST", new apig.LambdaIntegration(addReviewFn), {
       authorizer: requestAuthorizer,

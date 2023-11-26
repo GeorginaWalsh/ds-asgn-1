@@ -11,6 +11,17 @@ export const handler: APIGatewayProxyHandlerV2 = async (event, context) => { // 
     console.log("Event: ", event);
     const parameters  = event?.pathParameters;
     const movieId = parameters?.movieId ? parseInt(parameters.movieId) : undefined;
+    const queryParams = event.queryStringParameters;
+
+    // if (!queryParams) {
+    //   return {
+    //     statusCode: 500,
+    //     headers: {
+    //       "content-type": "application/json",
+    //     },
+    //     body: JSON.stringify({ message: "Missing query parameters" }),
+    //   };
+    // }
 
     if (!movieId) {
         return {
@@ -22,14 +33,31 @@ export const handler: APIGatewayProxyHandlerV2 = async (event, context) => { // 
         };
       }
 
-      const commandOutput = await ddbClient.send(
-        new ScanCommand({
-          TableName: process.env.REVIEW_TABLE_NAME,
+    let commandInput;
+    let commandOutput;
+
+    if (queryParams?.minRating) {
+      commandInput = {
+        TableName: process.env.REVIEW_TABLE_NAME,
+        IndexName: "minRating",
+        FilterExpression: "movieId = :m and begins_with(content, :r) ",
+        ExpressionAttributeValues: {
+          ":m": movieId,
+          ":r": queryParams.minRating?.toString(),
+        },
+      };
+    }  else {
+      commandInput = {
+        TableName: process.env.REVIEW_TABLE_NAME,
           FilterExpression: "movieId = :m",
           ExpressionAttributeValues: {
             ":m": movieId,
           },
-        })
+      };
+    } 
+
+      commandOutput = await ddbClient.send(
+        new ScanCommand( commandInput )
       );
 
     // const commandOutput = await ddbClient.send(

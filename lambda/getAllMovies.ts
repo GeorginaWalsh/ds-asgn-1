@@ -17,20 +17,30 @@ export const handler: APIGatewayProxyHandlerV2 = async (event, context) => { // 
     console.log("Event: ", event);
     const queryParams = event.queryStringParameters;
 
-    if (!queryParams) {
-      return {
-        statusCode: 500,
-        headers: {
-          "content-type": "application/json",
-        },
-        body: JSON.stringify({ message: "Missing query parameters" }),
-      };
-    }
+    // if (!queryParams) {
+    //   return {
+    //     statusCode: 500,
+    //     headers: {
+    //       "content-type": "application/json",
+    //     },
+    //     body: JSON.stringify({ message: "Missing query parameters" }),
+    //   };
+    // }
 
     // let commandInput: QueryCommandInput;
+    // let minRating = Number(queryParams.minRating)
+    // let ratings;
+
+    // let i=minRating;
+    // while (i <= 5) {
+    //   ratings.push(i.toString())
+    //   i++;
+    // }
+
     let commandInput;
     let commandOutput;
-    if (queryParams.minRating) {
+
+    if (queryParams?.minRating) {
       commandInput = {
         TableName: process.env.REVIEW_TABLE_NAME,
         IndexName: "minRating",
@@ -40,7 +50,7 @@ export const handler: APIGatewayProxyHandlerV2 = async (event, context) => { // 
           ":r": queryParams.minRating?.toString(),
         },
       };
-    } else {
+    }  else {
         commandInput = {
           TableName: process.env.TABLE_NAME,
         }

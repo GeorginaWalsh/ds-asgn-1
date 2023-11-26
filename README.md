@@ -1,16 +1,27 @@
-# ds-asgn-1
+## ServerlessREST Sddignment - Distributed Systems.
 
-repo: https://github.com/GeorginaWalsh/ds-asgn-1.git
+__Name:__ Georgina Walsh (20093147)
 
-spec: https://moodle.wit.ie/pluginfile.php/6837606/mod_resource/content/1/index.html
+This repository contains the implementation of a serverless REST API for the AWS platform. A CDK stack creates the infrastructure. The domain context of the API is movie reviews.
 
-The `cdk.json` file tells the CDK Toolkit how to execute your app.
+### API endpoints.
+ 
++ POST /movies/reviews - add a movie review.
++ GET /movies/{movieId}/reviews - Get all the reviews for a movie with the specified id.
++ GET /movies/{movieId}/reviews?minRating=n - Get all the reviews for the movie with the specified ID with a rating greater than the minRating.
++ GET /movies/{movieId}/reviews/{reviewerName} - Get the review for the movie with the specified movie ID and written by the named reviewer.
++ etc
++ etc
 
-## Useful commands
+[Include screenshots from the AWS console (API Gateway service) that clearly show the deployed API ( have legible font size). ]
 
-* `npm run build`   compile typescript to js
-* `npm run watch`   watch for changes and compile
-* `npm run test`    perform the jest unit tests
-* `cdk deploy`      deploy this stack to your default AWS account/region
-* `cdk diff`        compare deployed stack with current state
-* `cdk synth`       emits the synthesized CloudFormation template
+![](./images/api1.png)
+
+![](./images/api1.png)
+
+### Authentication..
+
+![](./images/pool.png)
+
+### Independent learning (If relevant)
+
