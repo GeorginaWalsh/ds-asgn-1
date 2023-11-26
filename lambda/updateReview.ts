@@ -1,6 +1,6 @@
 import { APIGatewayProxyHandlerV2 } from "aws-lambda";
 import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
-import { DynamoDBDocumentClient, PutCommand, DeleteCommand } from "@aws-sdk/lib-dynamodb";
+import { DynamoDBDocumentClient, UpdateCommand, PutCommand, PutCommandInput, DeleteCommand } from "@aws-sdk/lib-dynamodb";
 import Ajv from "ajv";
 import schema from "../shared/types.schema.json";
 import { parse } from "querystring";
@@ -8,6 +8,7 @@ import { parse } from "querystring";
 const ajv = new Ajv();
 const isValidBodyParams = ajv.compile(schema.definitions["MovieReview"] || {});
 
+const ddbClient = new DynamoDBClient({ region: process.env.REGION });
 const ddbDocClient = createDDbDocClient();
 
 export const handler: APIGatewayProxyHandlerV2 = async (event, context) => {
@@ -15,9 +16,10 @@ export const handler: APIGatewayProxyHandlerV2 = async (event, context) => {
     // Print Event
     console.log("Event: ", event);
     const body = event.body ? JSON.parse(event.body) : undefined;
+    const content = body?.content ? body.content : undefined;
     const parameters  = event?.pathParameters;
     const movieId = parameters?.movieId ? parseInt(parameters.movieId) : undefined;
-    const reviewerName = parameters?.revewerName ? parse(parameters.revewerName) : undefined;
+    const reviewerName = parameters?.reviewerName ? parameters.reviewerName : undefined;
   
     if (!body) {
       return {
@@ -36,7 +38,7 @@ export const handler: APIGatewayProxyHandlerV2 = async (event, context) => {
             "content-type": "application/json",
           },
           body: JSON.stringify({
-            message: `Incorrect type. Must match Movie schema`,
+            message: `Incorrect type. Must match Movie review schema`,
             schema: schema.definitions["MovieReview"],
           }),
         };
@@ -62,13 +64,31 @@ export const handler: APIGatewayProxyHandlerV2 = async (event, context) => {
           };
         }
 
+        if (!content) {
+          return {
+            statusCode: 500,
+            headers: {
+              "content-type": "application/json",
+            },
+            body: JSON.stringify({ message: "Missing review content to update" }),
+          };
+        }
+
     const commandOutput = await ddbDocClient.send(
-      new PutCommand({
+      new UpdateCommand({
         TableName: process.env.REVIEW_TABLE_NAME,
-        // Key: { movieId: movieId, reviewerName: reviewerName },
-        Item: {body},
+        Key: { movieId: movieId },
+        ConditionExpression:"movieId = :m and begins_with(reviewerName, :a) ",
+        UpdateExpression: "SET content = :c" ,
+        ExpressionAttributeValues: {
+          ":m": movieId,
+          ":a": reviewerName,
+          ':c': { content },
+        }
       })
     );
+
+    
     return {
       statusCode: 201,
       headers: {

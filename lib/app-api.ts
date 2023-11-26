@@ -54,15 +54,13 @@ export class AppApi extends Construct {
       removalPolicy: cdk.RemovalPolicy.DESTROY,
       tableName: "MovieReview",
     });
-
+    movieReviewsTable.addLocalSecondaryIndex({
+      indexName: "minRating",
+      sortKey: { name: "content", type: dynamodb.AttributeType.STRING },
+    });
     movieReviewsTable.addLocalSecondaryIndex({
       indexName: "reviewDate",
       sortKey: { name: "reviewDate", type: dynamodb.AttributeType.STRING },
-    });
-
-    movieReviewsTable.addLocalSecondaryIndex({
-      indexName: "ratingIx",
-      sortKey: { name: "content", type: dynamodb.AttributeType.STRING },
     });
 
     new custom.AwsCustomResource(this, "moviesddbInitData", {
@@ -105,7 +103,8 @@ export class AppApi extends Construct {
       memorySize: 128,
       environment: {
         TABLE_NAME: moviesTable.tableName,
-          REGION: 'eu-west-1',
+        REVIEW_TABLE_NAME: movieReviewsTable.tableName,
+        REGION: 'eu-west-1',
       },
     });
     const getMovieByIdFn = new node.NodejsFunction(this, "GetMovieByIdFn", {
@@ -121,21 +120,6 @@ export class AppApi extends Construct {
         REGION: 'eu-west-1',
       },
     });
-
-    const addReviewFn = new node.NodejsFunction(this, "AddReviewFn", {
-      ...appCommonFnProps,
-      entry: "./lambda/addReview.ts",
-      architecture: lambda.Architecture.ARM_64,
-      runtime: lambda.Runtime.NODEJS_16_X,
-          // entry: `${__dirname}/../lambda/addReview.ts`,
-      timeout: cdk.Duration.seconds(10),
-      memorySize: 128,
-      environment: {
-        REVIEW_TABLE_NAME: movieReviewsTable.tableName,
-        REGION: "eu-west-1",
-      },
-    });
-
     
     const getAllMovieReviewsFn = new node.NodejsFunction(this, "GetAllMovieReviewsFn", {
       ...appCommonFnProps,
@@ -165,6 +149,34 @@ export class AppApi extends Construct {
       },
     });
 
+    const addReviewFn = new node.NodejsFunction(this, "AddReviewFn", {
+      ...appCommonFnProps,
+      entry: "./lambda/addReview.ts",
+      architecture: lambda.Architecture.ARM_64,
+      runtime: lambda.Runtime.NODEJS_16_X,
+          // entry: `${__dirname}/../lambda/addReview.ts`,
+      timeout: cdk.Duration.seconds(10),
+      memorySize: 128,
+      environment: {
+        REVIEW_TABLE_NAME: movieReviewsTable.tableName,
+        REGION: "eu-west-1",
+      },
+    });
+
+    const updateReviewFn = new node.NodejsFunction(this, "UpdateReviewFn", {
+      ...appCommonFnProps,
+      entry: "./lambda/updateReview.ts",
+      architecture: lambda.Architecture.ARM_64,
+      runtime: lambda.Runtime.NODEJS_16_X,
+            // entry: `${__dirname}/../lambda/updateReview.ts`,
+      timeout: cdk.Duration.seconds(10),
+      memorySize: 128,
+      environment: {
+        REVIEW_TABLE_NAME: movieReviewsTable.tableName,
+        REGION: "eu-west-1",
+      },
+    });
+
     const removeReviewFn = new node.NodejsFunction(this, "RemoveReviewFn", {
       ...appCommonFnProps,
       entry: "./lambda/removeReview.ts",
@@ -179,19 +191,6 @@ export class AppApi extends Construct {
       },
     });
 
-    const updateReviewFn = new node.NodejsFunction(this, "UpdateReviewFn", {
-      ...appCommonFnProps,
-      entry: "./lambda/updateReview.ts",
-      architecture: lambda.Architecture.ARM_64,
-      runtime: lambda.Runtime.NODEJS_16_X,
-            // entry: `${__dirname}/../lambda/updateReview.ts`,
-      timeout: cdk.Duration.seconds(10),
-      memorySize: 128,
-      environment: {
-        TABLE_NAME: movieReviewsTable.tableName,
-        REGION: "eu-west-1",
-      },
-    });
 
     // const publicFn = new node.NodejsFunction(this, "PublicFn", {
     //   ...appCommonFnProps,
@@ -201,6 +200,7 @@ export class AppApi extends Construct {
 
     moviesTable.grantReadData(getMovieByIdFn)
     moviesTable.grantReadData(getAllMoviesFn)
+    movieReviewsTable.grantReadData(getAllMoviesFn);
     movieReviewsTable.grantReadData(getAllMovieReviewsFn);
     movieReviewsTable.grantReadData(getMovieReviewFn);
     movieReviewsTable.grantReadWriteData(addReviewFn)
