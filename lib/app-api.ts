@@ -56,6 +56,11 @@ export class AppApi extends Construct {
     });
 
     movieReviewsTable.addLocalSecondaryIndex({
+      indexName: "reviewDate",
+      sortKey: { name: "reviewDate", type: dynamodb.AttributeType.STRING },
+    });
+
+    movieReviewsTable.addLocalSecondaryIndex({
       indexName: "ratingIx",
       sortKey: { name: "content", type: dynamodb.AttributeType.STRING },
     });
@@ -83,7 +88,7 @@ export class AppApi extends Construct {
     const addReviewRes = getAllMoviesRes.addResource("reviews");
     const getAllReviewsRes = getMovieRes.addResource("reviews");
     const getReviewRes = getAllReviewsRes.addResource("{reviewerName}");
-
+    
 
     const authorizerFn = new node.NodejsFunction(this, "AuthorizerFn", {
       ...appCommonFnProps,
@@ -126,7 +131,7 @@ export class AppApi extends Construct {
       timeout: cdk.Duration.seconds(10),
       memorySize: 128,
       environment: {
-        TABLE_NAME: movieReviewsTable.tableName,
+        REVIEW_TABLE_NAME: movieReviewsTable.tableName,
         REGION: "eu-west-1",
       },
     });

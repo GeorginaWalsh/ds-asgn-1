@@ -26,7 +26,17 @@ export const handler: APIGatewayProxyHandlerV2 = async (event, context) => {
     const parameters  = event?.pathParameters;
     const queryParams = event.queryStringParameters;
     const movieId = parameters?.movieId ? parseInt(parameters.movieId) : undefined;
-    const reviewerName = parameters?.reviewerName ? parameters.reviewerName : undefined;
+    let reviewerName = parameters?.reviewerName ? parameters.reviewerName : undefined;
+    let reviewDate
+    // reviewerName.match(reg)
+    var reg = /^\d+$/;
+
+    // if (reviewerName?.match(reg)) {
+    //   reviewDate = reviewerName;
+    // } 
+    if (!reviewerName) {
+      reviewDate = parameters;
+    } 
     
 
     if (!movieId) {
@@ -40,14 +50,25 @@ export const handler: APIGatewayProxyHandlerV2 = async (event, context) => {
     }
 
     if (!reviewerName) {
-      return {
+      if (!reviewDate)
+      {return {
         statusCode: 404,
         headers: {
           "content-type": "application/json",
         },
-        body: JSON.stringify({ Message: "Missing reviewer name" }),
-      };
+        body: JSON.stringify({ Message: "Missing reviewer name or review year" }),
+      };}
     }
+
+    // if (!reviewDate) {
+    //   return {
+    //     statusCode: 404,
+    //     headers: {
+    //       "content-type": "application/json",
+    //     },
+    //     body: JSON.stringify({ Message: "Missing review year" }),
+    //   };
+    // }
 
     // if (!queryParams) {
     //   return {
@@ -124,17 +145,47 @@ export const handler: APIGatewayProxyHandlerV2 = async (event, context) => {
   //   }
   // }
     
+
     const ddbDocClient = createDocumentClient();
-    const commandOutput = await ddbClient.send(
-      new ScanCommand({
-        TableName: process.env.REVIEW_TABLE_NAME,
-        FilterExpression: "movieId = :m and begins_with(reviewerName, :a) ",
+    // const commandOutput = await ddbClient.send(
+    //   new ScanCommand({
+    //     TableName: process.env.REVIEW_TABLE_NAME,
+        // FilterExpression: "movieId = :m and begins_with(reviewerName, :a) or begins_with(reviewDate, :d)",
+        // ExpressionAttributeValues: {
+        //   ":m": movieId,
+        //   ":a": reviewerName,
+        //   ":d": reviewDate,
+        // },
+    //   })
+    // );
+;
+    let commandInput: QueryCommandInput = {
+      TableName: process.env.REVIEW_TABLE_NAME,
+    };
+    if (reviewDate) {
+      commandInput = {
+        ...commandInput,
+        KeyConditionExpression:"movieId = :m and begins_with(reviewDate, :a)",
+        ExpressionAttributeValues: {
+          ":m": movieId,
+          ":a": reviewDate,
+        },
+      };
+    } else {
+      commandInput = {
+        ...commandInput,
+        KeyConditionExpression:"movieId = :m and begins_with(reviewerName, :a) ",
         ExpressionAttributeValues: {
           ":m": movieId,
           ":a": reviewerName,
         },
-      })
-    );
+      };
+    }
+
+
+    const commandOutput = await ddbDocClient.send(
+      new QueryCommand(commandInput)
+      );
     // const commandOutput = await ddbDocClient.send(
     //   new GetCommand({
     //     TableName: process.env.REVIEW_TABLE_NAME,
