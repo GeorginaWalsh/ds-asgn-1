@@ -59,7 +59,7 @@ export const movieReviews: MovieReview[] = [
   {
     movieId: 1234,
     reviewerName: "Joe Bloggs",
-    reviewDate: "2023-10-20",
+    reviewDate: "2022-10-20",
     content: "5 stars - amazing",
   },
   {

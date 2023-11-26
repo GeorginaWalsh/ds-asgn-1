@@ -27,16 +27,13 @@ export const handler: APIGatewayProxyHandlerV2 = async (event, context) => {
     const queryParams = event.queryStringParameters;
     const movieId = parameters?.movieId ? parseInt(parameters.movieId) : undefined;
     let reviewerName = parameters?.reviewerName ? parameters.reviewerName : undefined;
-    let reviewDate
+    let reviewDate = Number(parameters?.reviewerName) ? Number(parameters?.reviewerName) : undefined;
     // reviewerName.match(reg)
     var reg = /^\d+$/;
 
     // if (reviewerName?.match(reg)) {
     //   reviewDate = reviewerName;
     // } 
-    if (!reviewerName) {
-      reviewDate = parameters;
-    } 
     
 
     if (!movieId) {
@@ -50,34 +47,33 @@ export const handler: APIGatewayProxyHandlerV2 = async (event, context) => {
     }
 
     if (!reviewerName) {
-      if (!reviewDate)
-      {return {
+      if (!reviewDate) {
+        return {
         statusCode: 404,
         headers: {
           "content-type": "application/json",
         },
         body: JSON.stringify({ Message: "Missing reviewer name or review year" }),
-      };}
+      };
     }
+  }
 
     const ddbDocClient = createDocumentClient();
 ;
-    let commandInput: QueryCommandInput = {
-      TableName: process.env.REVIEW_TABLE_NAME,
-    };
+    let commandInput;
     if (reviewDate) {
       commandInput = {
-        ...commandInput,
-        KeyConditionExpression:"movieId = :m and begins_with(reviewDate, :a)",
+        TableName: process.env.REVIEW_TABLE_NAME,
+        FilterExpression:"movieId = :m and begins_with(reviewDate, :a)",
         ExpressionAttributeValues: {
           ":m": movieId,
-          ":a": reviewDate,
+          ":a": reviewDate.toString(),
         },
       };
     } else {
       commandInput = {
-        ...commandInput,
-        KeyConditionExpression:"movieId = :m and begins_with(reviewerName, :a) ",
+        TableName: process.env.REVIEW_TABLE_NAME,
+        FilterExpression:"movieId = :m and begins_with(reviewerName, :a) ",
         ExpressionAttributeValues: {
           ":m": movieId,
           ":a": reviewerName,
@@ -87,7 +83,7 @@ export const handler: APIGatewayProxyHandlerV2 = async (event, context) => {
 
 
     const commandOutput = await ddbDocClient.send(
-      new QueryCommand(commandInput)
+      new ScanCommand(commandInput)
       );
     // const commandOutput = await ddbDocClient.send(
     //   new GetCommand({
